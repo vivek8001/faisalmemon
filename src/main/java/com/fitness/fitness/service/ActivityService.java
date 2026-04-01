@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +21,7 @@ public class ActivityService {
     private final UserRepositoy userRepositoy;
 
     public ActivityResponse createActivity(ActivityRequest request) {
-        User user=userRepositoy.findById(request.getId())
+        User user=userRepositoy.findById(request.getUserid())
                 .orElseThrow(()->new RuntimeException("Invalid User: "+ request.getUserid()));
         Activity activity= Activity.builder()
                 .user(user)
@@ -34,17 +35,17 @@ public class ActivityService {
         return mapToResponse(savedActivity);
     }
 
-    private ActivityResponse mapToResponse(Activity savedActivity) {
+    private ActivityResponse mapToResponse(Activity activity) {
         ActivityResponse response= new ActivityResponse();
-        response.setId(savedActivity.getId());
-        response.setUserid(savedActivity.getUser().getId());
-        response.setDuration(savedActivity.getDuration());
-        response.setType(savedActivity.getType());
-        response.setCaloriesBurned(savedActivity.getCaloriesBurnt());
-        response.setStartTime(savedActivity.getStartTime());
-        response.setAdditionalMetrics(savedActivity.getAdditionalMetrics());
-        response.setCreatedAt(savedActivity.getCreatedAt());
-        response.setUpdatedAt(savedActivity.getUpdatedAt());
+        response.setId(activity.getId());
+        response.setUserid(activity.getUser().getId());
+        response.setDuration(activity.getDuration());
+        response.setType(activity.getType());
+        response.setCaloriesBurned(activity.getCaloriesBurnt());
+        response.setStartTime(activity.getStartTime());
+        response.setAdditionalMetrics(activity.getAdditionalMetrics());
+        response.setCreatedAt(activity.getCreatedAt());
+        response.setUpdatedAt(activity.getUpdatedAt());
         return response;
     }
 
@@ -52,7 +53,11 @@ public class ActivityService {
         return activityRepository.findById(id).orElseThrow(()->new RuntimeException("Not valid"));
     }
 
-    public ResponseEntity<List<Activity>> getActivity(Activity activity) {
-        return ResponseEntity.ok(activityRepository.findAll());
+    public List<ActivityResponse> getUserActivity(String userId) {
+    //    return ResponseEntity.ok(activityRepository.findAll());
+        List<Activity> activityList=activityRepository.findByUserId(userId);
+        return activityList.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 }
